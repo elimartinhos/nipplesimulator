@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Nipple Simulator - Gostosura Edition</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #fff5f5; font-family: 'Segoe UI', sans-serif; }
+        #ui {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(255,255,255,0.9); padding: 15px;
+            border-radius: 12px; border: 2px solid #ffb3b3;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            pointer-events: none; /* Permite que o mouse interaja com o canvas abaixo */
+            z-index: 10;
+        }
+        .stat { font-size: 1.2em; color: #555; }
+        .val { font-weight: bold; color: #ff4d4d; }
+
+        #feedback-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em; /* Tamanho maior para a mensagem */
+            color: #cc0000;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 5;
+        }
+        #feedback-message.active {
+            opacity: 1;
+        }
+        #emoji {
+            font-size: 5em; /* Emoji grande */
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <div class="stat">Velocidade: <span id="speed" class="val">0.00</span> km/h</div>
+        <div class="stat">Gostosura: <span id="gostosura" class="val">100</span>%</div>
+    </div>
+
+    <div id="feedback-message">
+        Ai, não tá gostoso!<span id="emoji">😡</span>
+    </div>
+
+<script>
+let baseSize = 80;
+let currentSize = 80;
+let gostosuraLevel = 100; // Alterado para gostosura
+let colorVal = 200;
+
+// Posição central do "mamilo"
+let targetX;
+let targetY;
+let currentNippleX;
+let currentNippleY;
+
+function setup() {
+    createCanvas(windowWidth, windowHeight);
+    targetX = width / 2;
+    targetY = height / 2;
+    currentNippleX = width / 2;
+    currentNippleY = height / 2;
+}
+
+function draw() {
+    background(255, 245, 245);
+    
+    // Atualiza a posição do mamilo se ele estiver fugindo
+    currentNippleX = lerp(currentNippleX, targetX, 0.1);
+    currentNippleY = lerp(currentNippleY, targetY, 0.1);
+
+    let d = dist(mouseX, mouseY, currentNippleX, currentNippleY); // Distância ao centro do mamilo
+    
+    // Velocidade em km/h
+    let speedPx = dist(mouseX, mouseY, pmouseX, pmouseY);
+    let speedKmh = speedPx * 0.15; 
+    
+    document.getElementById('speed').innerText = speedKmh.toFixed(2);
+
+    // Lógica de Interação e Gostosura
+    if (d < 100 && gostosuraLevel >= 10) { // Só interage se não estiver fugindo
+        currentSize = lerp(currentSize, baseSize + 20, 0.2);
+        colorVal = lerp(colorVal, 160, 0.1);
+        
+        if (speedKmh > 3.0) {
+            gostosuraLevel -= 0.8; // Diminui por ser muito rápido
+        } else if (speedKmh > 0.1) {
+            gostosuraLevel += 0.5; // Aumenta por ser uma boa velocidade
+        }
+    } else {
+        currentSize = lerp(currentSize, baseSize, 0.1);
+        colorVal = lerp(colorVal, 200, 0.05);
+    }
+
+    // Lógica de Fuga
+    if (gostosuraLevel < 10) {
+        // Ativa a mensagem de feedback
+        document.getElementById('feedback-message').classList.add('active');
+        
+        // Mamilo foge do mouse
+        let angle = atan2(mouseY - currentNippleY, mouseX - currentNippleX);
+        targetX = currentNippleX - cos(angle) * 5; // Empurra para longe
+        targetY = currentNippleY - sin(angle) * 5;
+    } else {
+        // Desativa a mensagem e retorna à posição central
+        document.getElementById('feedback-message').classList.remove('active');
+        targetX = width / 2;
+        targetY = height / 2;
+    }
+
+    // Limites da Gostosura (0 a 100)
+    gostosuraLevel = constrain(gostosuraLevel, 0, 100);
+    document.getElementById('gostosura').innerText = Math.floor(gostosuraLevel);
+
+    // Desenho
+    noStroke();
+    // Areóla
+    fill(255, colorVal + 20, colorVal + 20, 150);
+    ellipse(currentNippleX, currentNippleY, currentSize * 2.2);
+    // Mamilo
+    fill(255, colorVal, colorVal);
+    ellipse(currentNippleX, currentNippleY, currentSize);
+    // Brilho de umidade/textura
+    fill(255, 255, 255, 80);
+    ellipse(currentNippleX - 15, currentNippleY - 15, currentSize * 0.25);
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+    // Reposiciona o alvo central ao redimensionar
+    targetX = width / 2;
+    targetY = height / 2;
+    currentNippleX = width / 2;
+    currentNippleY = height / 2;
+}
+</script>
+</body>
+</html>
